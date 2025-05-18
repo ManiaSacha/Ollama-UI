@@ -4,6 +4,10 @@ export interface Message {
   content: string;
   model?: string;
   timestamp: number;
+  image?: {
+    url: string;
+    alt: string;
+  };
 }
 
 export interface ChatState {
@@ -13,11 +17,12 @@ export interface ChatState {
   activeModelStreams: Record<string, AbortController | null>;
 }
 
-export type ModelType = 'llama2' | 'mistral' | 'codellama' | 'llama3.2';
+export type ModelType = 'llama2' | 'mistral' | 'codellama' | 'llama3.2' | 'gemma3';
 
 export interface OllamaRequestOptions {
   model: ModelType;
   prompt: string;
+  images?: string[];
   options?: {
     temperature?: number;
   };

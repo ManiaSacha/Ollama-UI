@@ -3,6 +3,7 @@ import { Send, StopCircle, Volume2, VolumeX } from 'lucide-react';
 import TemperatureControl from './TemperatureControl';
 import ModelSelector from './ModelSelector';
 import FileUpload from './FileUpload';
+import ImageUpload from './ImageUpload';
 import VoiceInput from './VoiceInput';
 import { ModelType } from '../types';
 
@@ -11,7 +12,9 @@ interface ChatInputProps {
     message: string, 
     model: ModelType, 
     temperature: number, 
-    compareMode: boolean
+    compareMode: boolean,
+    imageData?: string,
+    imageName?: string
   ) => void;
   onStopGeneration: () => void;
   isGenerating: boolean;
@@ -30,6 +33,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [model, setModel] = useState<ModelType>('llama2');
   const [temperature, setTemperature] = useState(0.7);
   const [compareMode, setCompareMode] = useState(false);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [imageName, setImageName] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea as user types
@@ -43,9 +48,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Handle sending a message
   const handleSendMessage = () => {
-    if (message.trim()) {
-      onSendMessage(message.trim(), model, temperature, compareMode);
+    if (message.trim() || imageData) {
+      onSendMessage(
+        message.trim(), 
+        model, 
+        temperature, 
+        compareMode, 
+        imageData || undefined, 
+        imageName || undefined
+      );
       setMessage('');
+      setImageData(null);
+      setImageName(null);
       
       // Reset height after clearing
       if (textareaRef.current) {
@@ -65,6 +79,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
   // Handle file upload
   const handleFileContent = (content: string) => {
     setMessage((prev) => prev + (prev ? '\n\n' : '') + content);
+  };
+  
+  // Handle image upload
+  const handleImageUpload = (imageData: string, fileName: string) => {
+    setImageData(imageData);
+    setImageName(fileName);
+  };
+  
+  // Clear image
+  const handleClearImage = () => {
+    setImageData(null);
+    setImageName(null);
   };
 
   // Handle voice input
@@ -108,6 +134,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center space-x-2">
               <FileUpload onFileContent={handleFileContent} />
+              <ImageUpload 
+                onImageUpload={handleImageUpload} 
+                onClearImage={handleClearImage}
+                hasImage={!!imageData}
+              />
               <VoiceInput onTranscript={handleTranscript} />
               
               <button
@@ -134,10 +165,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
               ) : (
                 <button
                   onClick={handleSendMessage}
-                  disabled={!message.trim()}
+                  disabled={!message.trim() && !imageData}
                   className={`
                     inline-flex items-center justify-center p-2 rounded-md 
-                    ${message.trim() 
+                    ${message.trim() || imageData
                       ? 'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600' 
                       : 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500 cursor-not-allowed'}
                     transition-colors

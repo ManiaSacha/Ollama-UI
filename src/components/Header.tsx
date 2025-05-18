@@ -20,13 +20,16 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
         <div className="flex items-center">
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="flex items-center justify-center p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-600 shadow-sm"
             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
           >
+            <span className="mr-2 text-sm font-medium hidden sm:inline">
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </span>
             {isDarkMode ? (
-              <Sun className="h-5 w-5 text-amber-400" />
+              <Sun className="h-5 w-5 text-amber-500" />
             ) : (
-              <Moon className="h-5 w-5 text-slate-700" />
+              <Moon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             )}
           </button>
         </div>

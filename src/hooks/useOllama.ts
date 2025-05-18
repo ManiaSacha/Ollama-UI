@@ -17,13 +17,21 @@ export const useOllama = () => {
   const abortControllersRef = useRef<Record<string, AbortController>>({});
 
   // Add a new user message to the chat
-  const addUserMessage = useCallback((content: string) => {
+  const addUserMessage = useCallback((content: string, imageData?: string, imageName?: string) => {
     const message: Message = {
       id: generateId(),
       role: 'user',
       content,
       timestamp: Date.now(),
     };
+    
+    // Add image data if provided
+    if (imageData) {
+      message.image = {
+        url: imageData,
+        alt: imageName || 'Uploaded image'
+      };
+    }
     
     setState(prev => ({
       ...prev,
@@ -38,14 +46,17 @@ export const useOllama = () => {
     prompt: string, 
     model: ModelType = 'llama2', 
     temperature: number = 0.7,
-    compareMode: boolean = false
+    compareMode: boolean = false,
+    imageData?: string,
+    imageName?: string
   ) => {
     // If already generating and not in compare mode, cancel previous generation
     if (state.isGenerating && !compareMode) {
       stopGeneration();
     }
     
-    const userMessage = addUserMessage(prompt);
+    // Add user message and get its reference (though we don't need to use it directly)
+    addUserMessage(prompt, imageData, imageName);
     
     // Create models array - either just the selected model or all models for compare mode
     const models: ModelType[] = compareMode 
@@ -91,11 +102,25 @@ export const useOllama = () => {
           },
         }));
 
+        // Process image data if present (remove data URL prefix)
+        let processedImageData: string | undefined;
+        if (imageData) {
+          // Check if it's a data URL and extract the base64 part
+          if (imageData.startsWith('data:')) {
+            // Format: data:[<mediatype>][;base64],<data>
+            const base64Data = imageData.split(',')[1];
+            processedImageData = base64Data;
+          } else {
+            processedImageData = imageData;
+          }
+        }
+        
         // Start the stream
         const stream = await generateStream(
           {
             model: modelName,
             prompt,
+            images: processedImageData ? [processedImageData] : undefined,
             options: { temperature },
           },
           abortController.signal
@@ -187,6 +212,26 @@ export const useOllama = () => {
     }));
   }, [stopGeneration]);
 
+  // Update an existing message
+  const updateMessage = useCallback((messageId: string, updates: Partial<Message>) => {
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.map(message => 
+        message.id === messageId 
+          ? { ...message, ...updates }
+          : message
+      ),
+    }));
+  }, []);
+
+  // Delete a message by id
+  const deleteMessage = useCallback((messageId: string) => {
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.filter(message => message.id !== messageId),
+    }));
+  }, []);
+
   return {
     messages: state.messages,
     isGenerating: state.isGenerating,
@@ -194,5 +239,7 @@ export const useOllama = () => {
     generateResponse,
     stopGeneration,
     clearMessages,
+    updateMessage,
+    deleteMessage,
   };
 };

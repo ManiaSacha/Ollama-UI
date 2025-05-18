@@ -7,6 +7,17 @@
     <title>Ollama Chat</title>
     <meta name="description" content="A frontend UI for interacting with locally running Ollama LLM server" />
     <meta name="theme-color" content="#4F46E5" />
+    <script>
+      // Prevent dark mode flickering on page load
+      (function() {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
